@@ -1,45 +1,65 @@
-// Described in documentation
+
 import flatpickr from "flatpickr";
-// Additional styles import
+
 import "flatpickr/dist/flatpickr.min.css";
 import Notiflix from 'notiflix';
 
-const timerEl = document.querySelector('.timer');
 const inputEl = document.querySelector('input#datetime-picker');
 const startBtn = document.querySelector('button[data-start]');
-//console.log(timerEl);
+
 const daysEl = document.querySelector('span[data-days]');
 const hoursEl = document.querySelector('span[data-hours]');
 const minutesEl = document.querySelector('span[data-minutes]');
 const secondsEl = document.querySelector('span[data-seconds]');
-//console.log(secondsEl);
-//divEl.setAttribute('style', 'font-size: 40px', 'display: inline');
+
 const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose(selectedDates) {
-    console.log(selectedDates[0]);  
+    handleClose(selectedDates[0]);  
 
   }
 }
 
 startBtn.disabled = true;
  flatpickr(inputEl, options);
-inputEl.addEventListener("input", flatpickr);
-    if (options[4] <= options[2]) {
-  console.log(options[4]);
-  Notiflix.Notify.failure('❌ Please choose a date in the future');
-      
-} else {
-  startBtn.disabled = false;
-  
-} 
+let deltaTime = 0;
+startBtn.addEventListener('click', handleStartBtnClick);
 
-let countdownTimer 
-let updateTime = inputEl.value;
-console.log(updateTime);
+function handleStartBtnClick() {
+  let intervalId = null;
+  intervalId = setInterval(() => {
+    deltaTime -= 1000;
+    if (deltaTime < 0) {
+      clearInterval(intervalId);
+      inputEl.disabled = false;
+      Notiflix.Notify.info("Time is over.")
+      return;
+    }
+    updateMarkup(convertMs(deltaTime))
+  }, 1000)
+} 
+function handleClose(selectedDate) {
+  const date = new Date();
+  const currentUnixTime = date.getTime();
+  const selectedUnixTime = Date.parse(selectedDate);
+  deltaTime = selectedUnixTime - currentUnixTime;
+  if (deltaTime > 0) {
+    startBtn.disabled = false;
+    inputEl.disabled = true;
+  } else {
+    Notiflix.Notify.failure("Please select time in the future.");
+  }
+}
+
+function updateMarkup({ days, hours, minutes, seconds }) {
+  daysEl.textContent = String(addZero(days));
+  hoursEl.textContent = String(addZero(hours));
+  minutesEl.textContent = String(addZero(minutes));
+  secondsEl.textContent = String(addZero(seconds));
+}
 function convertMs(ms) {
   // Number of milliseconds per unit of time
   const second = 1000;
@@ -58,24 +78,7 @@ function convertMs(ms) {
 
   return { days, hours, minutes, seconds };
 }
-
-console.log(convertMs(2000)); // {days: 0, hours: 0, minutes: 0, seconds: 2}
-console.log(convertMs(140000)); // {days: 0, hours: 0, minutes: 2, seconds: 20}
-console.log(convertMs(24140000)); // {days: 0, hours: 6 minutes: 42, seconds: 20}
-//console.log(options.defaultDate);
-startBtn.addEventListener('click', () => {
-countdownTimer = setInterval(() => {
-   updateTime--;
-  timerValueEl.innerHTML = updateTime;
-  console.log(timerValueEl);
-    if (updateTime === 0) {
-        clearInterval(timerEl);
-        alert('Time is up');
-    }
-}, 1000);
-})
-
-
-
-//divEl.setAttribute('style', 'display: flex', 'justify-content: flex-start');
+function addZero(value) {
+  return String(value).padStart(2, '0');
+}
 
